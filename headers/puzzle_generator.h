@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <tuple>
+#include <cstring>
 
 using namespace std;
 
@@ -30,6 +31,21 @@ class BW_Puzzle{
 
     ~BW_Puzzle(){ // destructor
         free(board); // release mem pointed to by malloc
+    }
+
+    BW_Puzzle(const BW_Puzzle &cpy):size(cpy.size){
+        board = (tuple<unsigned, int>*) malloc(size * sizeof(tuple<unsigned, int>));
+        memcpy(board, cpy.board, sizeof(tuple<unsigned, int>) * cpy.size);
+        blanks[0] = cpy.blanks[0];
+        blanks[1] = cpy.blanks[1];
+    };
+
+    BW_Puzzle & operator=(const BW_Puzzle & rhs){
+        if(this->size != rhs.size) {exit(1);} // do not copy mismatched sizes
+        memcpy(this->board, rhs.board, sizeof(tuple<unsigned, int>) * rhs.size);
+        this->blanks[0] = rhs.blanks[0];
+        this->blanks[1] = rhs.blanks[1];
+        return *this;
     }
 
     // overloaded print operator
