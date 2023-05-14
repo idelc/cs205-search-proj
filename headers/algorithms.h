@@ -105,7 +105,46 @@ unsigned misplacedTile(const BW_Puzzle& pz){
 //}
 
 unsigned manhattan(const BW_Puzzle& pz){
+    unsigned mh = 0;
+    int tmp_cls = -2;
+    int cnt = 0;
+    int first_class = -2;
+    unsigned mx_cnt = (pz.size-2) / 2;
+    unsigned cls_cnts[2] = {0,0}; // white at 0, black at 1
 
+    while(mx_cnt > 0){
+        tmp_cls = get<1>(pz.board[cnt]);
+        if(tmp_cls >= 0){
+            mx_cnt--;
+            cls_cnts[tmp_cls] += 1 ;
+        }
+        cnt++;
+    }
+
+    first_class = (cls_cnts[0] > cls_cnts[1]) ? 0 : 1;
+
+    mx_cnt = (pz.size-2) / 2;
+    cnt = 0;
+    while(mx_cnt > 0){
+        tmp_cls = get<1>(pz.board[cnt]);
+        if((tmp_cls != first_class) && (tmp_cls != -1)){
+            mx_cnt--;
+            mh += ((pz.size-2) / 2) - cnt;
+        }
+        else if(tmp_cls == -1){
+            mx_cnt--;
+        }
+        cnt++;
+    }
+    first_class = first_class ? 0 : 1;
+    while(cnt < pz.size){
+        tmp_cls = get<1>(pz.board[cnt]);
+        if((tmp_cls != first_class) && (tmp_cls != -1)){
+            mh += cnt - ((pz.size-2) / 2) - 1;
+        }
+        cnt++;
+    }
+    return mh;
 }
 
 #endif

@@ -22,11 +22,14 @@ int main(){
     BW_Puzzle test4(8);
     cout << test4 << ", left_blank = " << test4.blanks[0] << ", right_blank = " << test4.blanks[1] << endl;
     cout << "Misplaced tiles; expected 4 got " << misplacedTile(test4) << endl;
+    cout << "Manhattan dist; got " << manhattan(test4) << endl;
     test4.swap_with_blank_swtch(5,6);
     cout << test4 << ", left_blank = " << test4.blanks[0] << ", right_blank = " << test4.blanks[1] << endl;
     cout << "Misplaced tiles; expected 4 got " << misplacedTile(test4) << endl;
+    cout << "Manhattan dist; got " << manhattan(test4) << endl;
     test4.swap_with_blank_swtch(1,2);
     cout << test4 << ", left_blank = " << test4.blanks[0] << ", right_blank = " << test4.blanks[1] << endl;
     cout << "Misplaced tiles; expected 2 got " << misplacedTile(test4) << endl;
+    cout << "Manhattan dist; got " << manhattan(test4) << endl;
     return 0;
 }
