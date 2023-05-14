@@ -3,6 +3,7 @@
 using namespace std;
 
 #include "../headers/puzzle_generator.h"
+#include "../headers/algorithms.h"
 
 int main(){
 //    BW_Puzzle test3(8);
@@ -20,7 +21,9 @@ int main(){
 
     BW_Puzzle test4(8);
     cout << test4 << ", left_blank = " << test4.blanks[0] << ", right_blank = " << test4.blanks[1] << endl;
+    cout << "Misplaced tiles; expected 4 got " << misplacedTile(test4) << endl;
     test4.swap_with_blank_swtch(5,6);
     cout << test4 << ", left_blank = " << test4.blanks[0] << ", right_blank = " << test4.blanks[1] << endl;
+    cout << "Misplaced tiles; expected 4 got " << misplacedTile(test4) << endl;
     return 0;
 }
