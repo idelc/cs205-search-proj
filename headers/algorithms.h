@@ -54,28 +54,58 @@ bool smallerNode(const Search_Node& node1, const Search_Node& node2){
     return ((node1.cost+node1.heuristic)<(node2.cost+node2.heuristic));
 }
 
-unsigned misplacedTile(BW_Puzzle& pz){
+unsigned misplacedTile(const BW_Puzzle& pz){
     unsigned mt = 0;
-    int first_found = -1;
     int tmp_cls = -2;
+    int cnt = 0;
     unsigned mx_cnt = (pz.size-2) / 2;
-    while(first_found == -1){
-        first_found = get<1>(pz.board[mt]);
-        mt++;
-    }
-//    cout << "Found " << first_found << " first" << endl;
-    mt = 0;
-    for(unsigned i = 0; (i < pz.size) && (mx_cnt > 0); i++){
-        tmp_cls = get<1>(pz.board[i]);
-        if((tmp_cls != first_found)&&(tmp_cls != -1)){
-            mt++;
-//            cout << tmp_cls << " not " << first_found << ", " << mt << " " << mx_cnt << endl;
-        }
-        if(tmp_cls != -1){
+    unsigned cls_cnts[2] = {0,0}; // white at 0, black at 1
+
+    while(mx_cnt > 0){
+        tmp_cls = get<1>(pz.board[cnt]);
+        if(tmp_cls >= 0){
             mx_cnt--;
+            cls_cnts[tmp_cls] += 1 ;
         }
+        cnt++;
     }
-    return mt * 2;
+
+    if(cls_cnts[0] > cls_cnts[1]){
+        mt = cls_cnts[1] * 2;
+    }
+    else{
+        mt = cls_cnts[0] * 2;
+    }
+
+    return mt;
+}
+
+//unsigned misplacedTile(const BW_Puzzle& pz){
+//    unsigned mt = 0;
+//    int first_found = -1;
+//    int tmp_cls = -2;
+//    unsigned mx_cnt = (pz.size-2) / 2;
+//    while(first_found == -1){
+//        first_found = get<1>(pz.board[mt]);
+//        mt++;
+//    }
+////    cout << "Found " << first_found << " first" << endl;
+//    mt = 0;
+//    for(unsigned i = 0; (i < pz.size) && (mx_cnt > 0); i++){
+//        tmp_cls = get<1>(pz.board[i]);
+//        if((tmp_cls != first_found)&&(tmp_cls != -1)){
+//            mt++;
+////            cout << tmp_cls << " not " << first_found << ", " << mt << " " << mx_cnt << endl;
+//        }
+//        if(tmp_cls != -1){
+//            mx_cnt--;
+//        }
+//    }
+//    return mt * 2;
+//}
+
+unsigned manhattan(const BW_Puzzle& pz){
+
 }
 
 #endif
