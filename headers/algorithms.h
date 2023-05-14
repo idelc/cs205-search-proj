@@ -4,6 +4,9 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <ctime>
+#include <unordered_map>
+#include <string>
 
 #include "puzzle_generator.h"
 
@@ -145,6 +148,103 @@ unsigned manhattan(const BW_Puzzle& pz){
         cnt++;
     }
     return mh;
+}
+
+unsigned is_solution(BW_Puzzle& pzl){
+    unsigned target_cls = -2;
+    unsigned cntr = 0;
+
+    while(target_cls == -2){
+        int tmpcls = get<1>(pzl.board[cntr++];
+        if(tmpcls) != -1){
+            target_cls == tmpcls;
+            cntr = 0;
+        }
+    }
+
+    while(cntr < ((pzl.size - 2) / 2)){
+        int tmpcls = get<1>(pzl.board[cntr++];
+        if((tmpcls != 1) && (tmpcls != target_cls)){
+            return false;
+        }
+    }
+    return true;
+}
+
+string hash_state(BW_Puzzle& pzl){
+    string temp = "";
+    for(unsigned i = 0; i < pzl.size; i++){
+        temp += get<1>(pzl.board[i]);
+    }
+    return temp;
+}
+
+void generalSearch(BW_Puzzle& pzl, const unsigned heu, bool print){
+    clock_t timeS = clock();
+    unsigned mostExpanded = 0;  // largest size of the queue
+    unsigned sizeTemp = 0;      // used to store size of queue every time
+    unsigned totalExp = 0;      // increments when a node is expanded
+    bool solved = false;        // loop condition
+    unordered_map<string, uint8_t> visited_nodes;
+//    list<Search_Node*> solution path;
+    list<Search_Node*> nodes;          // list of nodes
+    ofstream write;             // write stream for tracing file
+    nodes.push_front(new Search_Node(pzl,0,0,{-1,-1,-1,-1})); //First node, no cost, no heuristic, last move is invalid
+    write.open("Trace.txt");
+    if(!write.is_open()){
+        cout << "error opening file" << endl;
+        exit(1);
+    }
+    while(!solved){
+        if(nodes.empty()){
+            cout << "Failed to solve the puzzle" << endl; // node list empty, no solution
+            return;
+        }
+        nodes.sort(smallerNode); // sort node list every loop execution
+        Search_Node temp = *nodes.front(); // make a copy so as to not need top directly
+        nodes.pop_front(); // delete top
+        sizeTemp = nodes.size(); // store size temporarily
+        totalExp++;             // increment number of nodes expanded
+        mostExpanded = max(mostExpanded, sizeTemp); // compare what the max size of the list was to the current size,
+        visited_nodes.insert({hash_state(temp.node_pzl),0});
+
+        if(print){ write << "\n\n" << temp.node_pzl << "cost: " << temp.cost << " heu: " << temp.heuristic <<" in queue: " << nodes.size() << "\n" << endl;}
+        if(is_solution(temp.node_pzl);){ // output the data needed for the report
+            cout << "Solution found at depth: " << temp.cost;
+            cout << "\nTotal nodes expanded: " << totalExp;
+            cout << "\nMax size of queue: "<< mostExpanded;
+            cout << "\nCPU time (linux only): " << static_cast<double>((clock()-timeS))/CLOCKS_PER_SEC << " seconds";
+            cout << "\nNodes at frontier: " << nodes.size() << endl;
+            write.close();
+            return;
+        }
+        else{ // expand nodes
+            Search_Node tempMoves = temp; // dummy variable
+            for(unsigned i = 0; i < (temp.node_pzl.size - 1); i++){
+                tempMoves = temp;
+                if(tempMoves.node_pzl.swap_with_blank_swtch(i, i+1)){
+                    if(visited_nodes.find(hash_state(temp.node_pzl)) == visited_nodes.end()){
+                        tempMoves.cost += 1;
+                        switch (heu) {
+                            case 0:
+                                //misplaced tile
+                                tempMoves.heuristic = misplacedTile(tempMoves.node_pzl);
+                                break;
+                            case 1:
+                                // manhattan
+                                tempMoves.heuristic = manhattan(tempMoves.node_pzl);
+                                break;
+                            default:
+                                // uniform cost
+                                tempMoves.heuristic = 0;
+                                break;
+                        }
+                        nodes.push_front(new Search_Node(tempMoves));
+                    }
+                }
+            }
+        }
+    }
 }
 
 #endif
