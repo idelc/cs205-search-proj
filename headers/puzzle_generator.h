@@ -33,6 +33,7 @@ class BW_Puzzle{
         free(board); // release mem pointed to by malloc
     }
 
+    // deep copy constructor
     BW_Puzzle(const BW_Puzzle &cpy):size(cpy.size){
         board = (tuple<unsigned, int>*) malloc(size * sizeof(tuple<unsigned, int>));
         memcpy(board, cpy.board, sizeof(tuple<unsigned, int>) * cpy.size);
@@ -40,6 +41,7 @@ class BW_Puzzle{
         blanks[1] = cpy.blanks[1];
     };
 
+    // overload assignment operator
     BW_Puzzle & operator=(const BW_Puzzle & rhs){
         if(this->size != rhs.size) {exit(1);} // do not copy mismatched sizes
         memcpy(this->board, rhs.board, sizeof(tuple<unsigned, int>) * rhs.size);
@@ -87,6 +89,28 @@ class BW_Puzzle{
         return o;
     }
 
+    // Main manipulation method. Pass in two indexes, check if adjacent, non-blank
+    // swap with blank after flipping. Return true for successful op.
+    bool swap_with_blank_swtch(unsigned left, unsigned right){
+        if((left >= this->size)||(left < 0)){return false;} // invalid index check
+        if((right >= this->size)||(right < 0)){return false;}
+        if((left + 1) != right){return false;} // non adjacency check
+        if((left == blanks[0])||(left == blanks[1])){return false;} // check if blanks
+        if((right == blanks[0])||(right == blanks[1])){return false;} // check if blanks
+
+        tuple<unsigned, int> temp = this->board[left];
+        this->board[left] = this->board[blanks[1]];
+        this->board[blanks[1]] = temp;
+
+        temp = this->board[right];
+        this->board[right] = this->board[blanks[0]];
+        this->board[blanks[0]] = temp;
+
+        blanks[0] = left;
+        blanks[1] = right;
+
+        return true;
+    }
 
 
     // variables
