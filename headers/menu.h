@@ -25,13 +25,13 @@ void basicTest(unsigned pzl_sz, bool swtch){
             case 0:
                 return;
             case 1:
-                generalSearch(toUse, 1, true, swtch);
+                generalSearch(toUse, 0, true, swtch);
                 return;
             case 2:
-                generalSearch(toUse, 2, true, swtch);
+                generalSearch(toUse, 1, true, swtch);
                 return;
             case 3:
-                generalSearch(toUse, 3, true, swtch);
+                generalSearch(toUse, 2, true, swtch);
                 return;
             default:
                 cout << "Unrecognized input, please try again" << endl;
