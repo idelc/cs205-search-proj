@@ -112,6 +112,27 @@ class BW_Puzzle{
         return true;
     }
 
+    bool swap_with_blank(unsigned left, unsigned right){
+        if((left >= this->size)||(left < 0)){return false;} // invalid index check
+        if((right >= this->size)||(right < 0)){return false;}
+        if((left + 1) != right){return false;} // non adjacency check
+        if((left == blanks[0])||(left == blanks[1])){return false;} // check if blanks
+        if((right == blanks[0])||(right == blanks[1])){return false;} // check if blanks
+
+        tuple<unsigned, int> temp = this->board[left];
+        this->board[left] = this->board[blanks[0]];
+        this->board[blanks[0]] = temp;
+
+        temp = this->board[right];
+        this->board[right] = this->board[blanks[1]];
+        this->board[blanks[1]] = temp;
+
+        blanks[0] = left;
+        blanks[1] = right;
+
+        return true;
+    }
+
 
     // variables
     unsigned size; // size of the board, will be input + 2 to add the blanks at the beginning
