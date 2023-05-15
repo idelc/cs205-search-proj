@@ -7,6 +7,7 @@
 #include <ctime>
 #include <unordered_map>
 #include <string>
+#include <list>
 
 #include "puzzle_generator.h"
 
@@ -22,23 +23,18 @@
 
 class Search_Node{ // class to hold info about search tree node
  public:
-    Search_Node(BW_Puzzle& pzl, unsigned cst, unsigned heu, int lstmv[4]): node_pzl(pzl), cost(cst), heuristic(heu) {
-        for(unsigned i = 0; i < 4; i++){
-            lastMove[i] = lstmv[i];
-        }
-    };
+    Search_Node(BW_Puzzle& pzl, unsigned cst, unsigned heu): node_pzl(pzl), cost(cst), heuristic(heu) {};
 
-    Search_Node(const Search_Node& nd): node_pzl(nd.node_pzl), cost(nd.cost), heuristic(nd.heuristic) {
-        for(unsigned i = 0; i < 4; i++){
-            this->lastMove[i] = nd.lastMove[i];
-        }
-    };
+    Search_Node(const Search_Node& nd): node_pzl(nd.node_pzl), cost(nd.cost), heuristic(nd.heuristic) {};
 
-    Search_Node(Search_Node* nd): node_pzl(nd->node_pzl), cost(nd->cost), heuristic(nd->heuristic) {
-        for(unsigned i = 0; i < 4; i++){
-            this->lastMove[i] = nd->lastMove[i];
-        }
-    };
+    Search_Node(Search_Node* nd): node_pzl(nd->node_pzl), cost(nd->cost), heuristic(nd->heuristic) {};
+
+    Search_Node& operator=(const Search_Node& rhs){
+        this->node_pzl = rhs.node_pzl;
+        this->cost = rhs.cost;
+        this->heuristic = rhs.heuristic;
+        return *this;
+    }
 
     ~Search_Node(){}
 
@@ -48,8 +44,6 @@ class Search_Node{ // class to hold info about search tree node
     unsigned cost;
     // The value returned by the heuristic function for the puzzle
     unsigned heuristic;
-    // store last move and do not make a node undoing it
-    int lastMove[4];
 };
 
 // comparitor function for nodes, adapted from list sort reference above
@@ -153,28 +147,34 @@ unsigned manhattan(const BW_Puzzle& pz){
 unsigned is_solution(BW_Puzzle& pzl){
     unsigned target_cls = -2;
     unsigned cntr = 0;
+    unsigned seen_cntr = 0;
 
     while(target_cls == -2){
-        int tmpcls = get<1>(pzl.board[cntr++];
-        if(tmpcls) != -1){
-            target_cls == tmpcls;
+        int tmpcls = get<1>(pzl.board[cntr++]);
+//        cout << "Checking sol, got " << tmpcls << endl;
+        if(tmpcls != -1){
+            target_cls = tmpcls;
             cntr = 0;
         }
     }
 
-    while(cntr < ((pzl.size - 2) / 2)){
-        int tmpcls = get<1>(pzl.board[cntr++];
-        if((tmpcls != 1) && (tmpcls != target_cls)){
-            return false;
+    while((seen_cntr < ((pzl.size - 2) / 2)) && cntr < pzl.size){
+        int tmpcls = get<1>(pzl.board[cntr++]);
+        if(tmpcls != -1){
+            if(tmpcls != target_cls){
+                return false;
+            }
+            seen_cntr++;
         }
     }
+    if((pzl.blanks[0] != 0) && (pzl.blanks[0] != pzl.size-2)){return false;}
     return true;
 }
 
 string hash_state(BW_Puzzle& pzl){
     string temp = "";
     for(unsigned i = 0; i < pzl.size; i++){
-        temp += get<1>(pzl.board[i]);
+        temp += to_string(get<1>(pzl.board[i]));
     }
     return temp;
 }
@@ -189,7 +189,7 @@ void generalSearch(BW_Puzzle& pzl, const unsigned heu, bool print){
 //    list<Search_Node*> solution path;
     list<Search_Node*> nodes;          // list of nodes
     ofstream write;             // write stream for tracing file
-    nodes.push_front(new Search_Node(pzl,0,0,{-1,-1,-1,-1})); //First node, no cost, no heuristic, last move is invalid
+    nodes.push_front(new Search_Node(pzl,0,0)); //First node, no cost, no heuristic, last move is invalid
     write.open("Trace.txt");
     if(!write.is_open()){
         cout << "error opening file" << endl;
@@ -198,6 +198,7 @@ void generalSearch(BW_Puzzle& pzl, const unsigned heu, bool print){
     while(!solved){
         if(nodes.empty()){
             cout << "Failed to solve the puzzle" << endl; // node list empty, no solution
+            write.close();
             return;
         }
         nodes.sort(smallerNode); // sort node list every loop execution
@@ -209,7 +210,8 @@ void generalSearch(BW_Puzzle& pzl, const unsigned heu, bool print){
         visited_nodes.insert({hash_state(temp.node_pzl),0});
 
         if(print){ write << "\n\n" << temp.node_pzl << "cost: " << temp.cost << " heu: " << temp.heuristic <<" in queue: " << nodes.size() << "\n" << endl;}
-        if(is_solution(temp.node_pzl);){ // output the data needed for the report
+        cout << "\n\n" << temp.node_pzl << " cost: " << temp.cost << " heu: " << temp.heuristic <<" in queue: " << nodes.size() << "\n" << endl;
+        if(is_solution(temp.node_pzl)){ // output the data needed for the report
             cout << "Solution found at depth: " << temp.cost;
             cout << "\nTotal nodes expanded: " << totalExp;
             cout << "\nMax size of queue: "<< mostExpanded;
@@ -219,11 +221,14 @@ void generalSearch(BW_Puzzle& pzl, const unsigned heu, bool print){
             return;
         }
         else{ // expand nodes
+//            cout << "Node expansion" << endl;
             Search_Node tempMoves = temp; // dummy variable
             for(unsigned i = 0; i < (temp.node_pzl.size - 1); i++){
                 tempMoves = temp;
-                if(tempMoves.node_pzl.swap_with_blank_swtch(i, i+1)){
-                    if(visited_nodes.find(hash_state(temp.node_pzl)) == visited_nodes.end()){
+                if(tempMoves.node_pzl.swap_with_blank_swtch(i, i+1) == true){
+                    string tmp_hsh = hash_state(tempMoves.node_pzl);
+//                    cout << "Checking if " << tmp_hsh << " already exists" << endl;
+                    if(visited_nodes.find(tmp_hsh) == visited_nodes.end()){
                         tempMoves.cost += 1;
                         switch (heu) {
                             case 0:

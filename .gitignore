@@ -31,3 +31,5 @@
 *.out
 *.app
 bw_puzzle
+
+Trace.txt

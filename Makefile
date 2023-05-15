@@ -12,7 +12,7 @@ all:
 	$(CC)  -o bw_puzzle src/main.cpp
 
 clean:
-	$(RM) -r $(BUILDDIR)
+	$(RM) -r Trace.txt bw_puzzle
 
 test: all
 	./bw_puzzle
