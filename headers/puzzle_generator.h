@@ -8,16 +8,17 @@
 
 using namespace std;
 
+// class to hold puzzle board object and manipulate it
 class BW_Puzzle{
  public:
     // constructor for the black white puzzle
-    BW_Puzzle(unsigned sz): size(sz+2){ // assume that appropriate size was passed in (even)
+    BW_Puzzle(unsigned sz): size(sz+2){ // assume that appropriate size was passed in (even), add 2 for blanks
         // dynamically allocate the space we need for the board
         board = (tuple<unsigned, int>*) malloc(size * sizeof(tuple<unsigned, int>));
 
         // create the blanks, set their positions and place faux pieces on the board
         blanks[0] = 0;
-        board[0] = {0,-1}; // ID: 0, is neither black nor white
+        board[0] = {0,-1}; // ID: -1, is neither black nor white
         blanks[1] = 1;
         board[1] = {0,-1};
 
@@ -98,6 +99,7 @@ class BW_Puzzle{
         if((left == blanks[0])||(left == blanks[1])){return false;} // check if blanks
         if((right == blanks[0])||(right == blanks[1])){return false;} // check if blanks
 
+        // basic swapping, but we flip the order
         tuple<unsigned, int> temp = this->board[left];
         this->board[left] = this->board[blanks[1]];
         this->board[blanks[1]] = temp;
@@ -106,6 +108,7 @@ class BW_Puzzle{
         this->board[right] = this->board[blanks[0]];
         this->board[blanks[0]] = temp;
 
+        // update where the blanks are
         blanks[0] = left;
         blanks[1] = right;
 
@@ -119,6 +122,7 @@ class BW_Puzzle{
         if((left == blanks[0])||(left == blanks[1])){return false;} // check if blanks
         if((right == blanks[0])||(right == blanks[1])){return false;} // check if blanks
 
+        // basic swapping
         tuple<unsigned, int> temp = this->board[left];
         this->board[left] = this->board[blanks[0]];
         this->board[blanks[0]] = temp;
@@ -127,6 +131,7 @@ class BW_Puzzle{
         this->board[right] = this->board[blanks[1]];
         this->board[blanks[1]] = temp;
 
+        // update where the blanks are now
         blanks[0] = left;
         blanks[1] = right;
 
