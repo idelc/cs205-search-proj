@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <string>
 #include <list>
+#include <algorithm>
+#include <stack>
 
 #include "puzzle_generator.h"
 
@@ -54,20 +56,24 @@ bool smallerNode(const Search_Node& node1, const Search_Node& node2){
 unsigned misplacedTile(const BW_Puzzle& pz){
     unsigned mt = 0;
     int tmp_cls = -2;
-    int cnt = 0;
-    unsigned seen = 0;
+    unsigned sz = pz.size;
+    unsigned half = (sz-2) / 2;
 
-    while((seen < ((pz.size-2)/2)) && (cnt < pz.size)){
-        tmp_cls = get<1>(pz.board[cnt++]);
-        if(tmp_cls != -1){
-            seen++;
-            if(tmp_cls != 1){
+    for(unsigned i = 0; i < sz-2; i++){
+        if(i < half){
+            if(get<1>(pz.board[i]) != 1){
+                mt++;
+            }
+        }
+        else if(i < sz-2){
+            if(get<1>(pz.board[i]) != 0){
                 mt++;
             }
         }
     }
-    mt *= 2;
-    if((pz.blanks[0] != 0) && (pz.blanks[0] != pz.size-2)){mt += 2;}
+    if(pz.blanks[0] != sz-2){
+        mt += 2;
+    }
     return mt;
 }
 
@@ -105,27 +111,24 @@ unsigned manhattan(const BW_Puzzle& pz){
     unsigned first_half = (sz-2) / 2;
     unsigned temp_lbls[sz - 2];
 
-//    cout << "mh sees: ";
-    for(unsigned i = 0; i < sz; i++){
+    for(unsigned i = 0; i<sz; i++){
         tmp_cls = get<1>(pz.board[i]);
         if(tmp_cls != -1){
-            temp_lbls[seen++] = tmp_cls;
-//            cout << tmp_cls << " ";
+            if(i < first_half){
+                if(tmp_cls != 1){
+                    mh += first_half - i;
+                }
+            }
+            else{
+                if(tmp_cls != 0){
+                    mh += i-first_half-1;
+                }
+            }
         }
     }
-//    cout << endl;
 
-    for(unsigned i = 0; i < sz-2; i++){
-        if(i < first_half){
-            if(temp_lbls[i] != 1){
-                mh += first_half - i;
-            }
-        }
-        else{
-            if(temp_lbls[i] != 0){
-                mh += (i - first_half) + 1;
-            }
-        }
+    if(pz.blanks[0] != sz-2){
+        mh += (sz-2-pz.blanks[0])*2;
     }
     return mh;
 }
@@ -133,45 +136,40 @@ unsigned manhattan(const BW_Puzzle& pz){
 //unsigned manhattan(const BW_Puzzle& pz){
 //    unsigned mh = 0;
 //    int tmp_cls = -2;
-//    int cnt = 0;
-//    int first_class = -2;
-//    unsigned mx_cnt = (pz.size-2) / 2;
-//    unsigned cls_cnts[2] = {0,0}; // white at 0, black at 1
+//    int seen = 0;
+//    unsigned sz = pz.size;
+//    unsigned first_half = (sz-2) / 2;
+//    unsigned temp_lbls[sz - 2];
 //
-//    while(mx_cnt > 0){
-//        tmp_cls = get<1>(pz.board[cnt]);
-//        if(tmp_cls >= 0){
-//            mx_cnt--;
-//            cls_cnts[tmp_cls] += 1 ;
+////    cout << "mh sees: ";
+//    for(unsigned i = 0; i < sz; i++){
+//        tmp_cls = get<1>(pz.board[i]);
+//        if(tmp_cls != -1){
+//            temp_lbls[seen++] = tmp_cls;
+////            cout << tmp_cls << " ";
 //        }
-//        cnt++;
+//    }
+////    cout << endl;
+//
+//    for(unsigned i = 0; i < sz-2; i++){
+//        if(i < first_half){
+//            if(temp_lbls[i] != 1){
+//                mh += first_half - i;
+//            }
+//        }
+//        else{
+//            if(temp_lbls[i] != 0){
+//                mh += (i - first_half) + 1;
+//            }
+//        }
 //    }
 //
-//    first_class = (cls_cnts[0] > cls_cnts[1]) ? 0 : 1;
-//
-//    mx_cnt = (pz.size-2) / 2;
-//    cnt = 0;
-//    while(mx_cnt > 0){
-//        tmp_cls = get<1>(pz.board[cnt]);
-//        if((tmp_cls != first_class) && (tmp_cls != -1)){
-//            mx_cnt--;
-//            mh += ((pz.size-2) / 2) - cnt;
-//        }
-//        else if(tmp_cls == -1){
-//            mx_cnt--;
-//        }
-//        cnt++;
-//    }
-//    first_class = first_class ? 0 : 1;
-//    while(cnt < pz.size){
-//        tmp_cls = get<1>(pz.board[cnt]);
-//        if((tmp_cls != first_class) && (tmp_cls != -1)){
-//            mh += cnt - ((pz.size-2) / 2) - 1;
-//        }
-//        cnt++;
+//    if((pz.blanks[0] != 0) && (pz.blanks[0] != pz.size-2)){
+//        mh += min((pz.blanks[0]*2),((pz.size-2-pz.blanks[0])*2));
 //    }
 //    return mh;
 //}
+
 
 unsigned is_solution(BW_Puzzle& pzl){
     unsigned target_cls;
@@ -211,11 +209,13 @@ void generalSearch(BW_Puzzle& pzl, const unsigned heu, bool print, bool swtch){
     unsigned sizeTemp = 0;      // used to store size of queue every time
     unsigned totalExp = 0;      // increments when a node is expanded
     bool solved = false;        // loop condition
+//    stack<Search_Node> sol_path;
     unordered_map<string, uint8_t> visited_nodes;
-//    list<Search_Node*> solution path;
     list<Search_Node*> nodes;          // list of nodes
     ofstream write;             // write stream for tracing file
     nodes.push_front(new Search_Node(pzl,0,0)); //First node, no cost, no heuristic, last move is invalid
+//    Search_Node temp = *nodes.front();
+//    sol_path.push(temp);
     if(print){
         write.open("Trace.txt");
         if(!write.is_open()){
@@ -231,13 +231,17 @@ void generalSearch(BW_Puzzle& pzl, const unsigned heu, bool print, bool swtch){
         }
         nodes.sort(smallerNode); // sort node list every loop execution
         Search_Node temp = *nodes.front(); // make a copy so as to not need top directly
+//        while(sol_path.top().cost >= temp.cost){
+//            sol_path.pop();
+//        }
+//        sol_path.push(temp);
         nodes.pop_front(); // delete top
         sizeTemp = nodes.size(); // store size temporarily
         totalExp++;             // increment number of nodes expanded
         mostExpanded = max(mostExpanded, sizeTemp); // compare what the max size of the list was to the current size,
         visited_nodes.insert({hash_state(temp.node_pzl),0});
 
-        if(print){ write << temp.node_pzl << "cost: " << temp.cost << " heu: " << temp.heuristic <<" in queue: " << nodes.size() << "\n" << endl;}
+        if(print){ write << temp.node_pzl << " cost: " << temp.cost << " heu: " << temp.heuristic <<" in queue: " << nodes.size() << "\n" << endl;}
 //        cout << "\n\n" << temp.node_pzl << " cost: " << temp.cost << " heu: " << temp.heuristic <<" in queue: " << nodes.size() << "\n" << endl;
         if(is_solution(temp.node_pzl)){ // output the data needed for the report
             cout << "Solution found at depth: " << temp.cost;
@@ -246,6 +250,17 @@ void generalSearch(BW_Puzzle& pzl, const unsigned heu, bool print, bool swtch){
             cout << "\nCPU time (linux only): " << static_cast<double>((clock()-timeS))/CLOCKS_PER_SEC << " seconds";
             cout << "\nNodes at frontier: " << nodes.size() << endl;
             if(print){write.close();}
+//            ofstream writeSol;
+//            writeSol.open("solution_path.txt");
+//            if(!writeSol.is_open()){
+//                cout << "error opening file" << endl;
+//                exit(1);
+//            }
+//            while(!sol_path.empty()){
+//                temp = sol_path.top();
+//                writeSol << temp.node_pzl << " cost: " << temp.cost << " heu: " << temp.heuristic <<" in queue: " << nodes.size() << "\n" << endl;
+//                sol_path.pop();
+//            }
             return;
         }
         else{ // expand nodes
